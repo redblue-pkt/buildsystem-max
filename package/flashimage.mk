@@ -18,6 +18,8 @@ else
 endif
 else ifeq ($(BOXMODEL),vuduo)
 	$(MAKE) flash-image-vuduo
+else ifeq ($(BOXMODEL),$(filter $(BOXMODEL),orangepioneplus))
+	$(MAKE) flash-image-orangepioneplus-sdcard
 else
 	echo -e "$(TERM_RED_BOLD)unsupported box model$(TERM_NORMAL)"
 endif
@@ -579,3 +581,78 @@ flash-image-vuduo: host-mtd-utils
 		zip -r $(IMAGE_DIR)/$(BOXMODEL)_$(FLAVOUR)_$(ITYPE)_$(DATE).zip $(VUDUO_PREFIX)*
 	# cleanup
 	rm -rf $(IMAGE_BUILD_DIR)
+
+# -----------------------------------------------------------------------------
+# Allwinner H6 Orange Pi One Plus
+
+# Create an image that can by written onto a SD card using dd.
+# Originally written for rasberrypi adapt for the needs of allwinner sunxi based boards
+#
+# The disk layout used is:
+#
+#    0                      -> 8*1024                           - reserverd
+#    8*1024                 ->                                  - arm combined spl/u-boot or aarch64 spl
+#    40*1024                ->                                  - aarch64 u-boot
+#    2048*1024              -> BOOT_SPACE                       - bootloader and kernel
+#
+#
+
+IMAGE_NAME = "orangepi-one-plus"
+DTB = "sun50i-h6-orangepi-one-plus.dtb"
+
+UBOOT = "$(TARGET_DIR)/boot/u-boot-$(IMAGE_NAME)-with-spl.bin"
+DTBFILE = "$(TARGET_DIR)/boot/$(DTB)"
+UBOOTDATA = "$(TARGET_DIR)/boot/orangepi_one_plus_env.txt"
+UBOOTSCRIPT = "$(TARGET_DIR)/boot/$(IMAGE_NAME)-boot.scr"
+KERNEL = "$(TARGET_DIR)/boot/$(IMAGE_NAME)-kernel.img"
+UIMAGE = "$(TARGET_DIR)/boot/uImage"
+
+SDIMG = "$(IMAGE_DIR)/$(IMAGE_NAME).rootfs.sunxi-sdimg"
+
+KERNEL_LOADADDR = 0x40008000
+IMAGE_ROOTFS_ALIGNMENT = "2048"
+
+BOOT_SPACE = "61440"
+ROOT_SPACE = "512000"
+
+SDIMG_BOOTFS_TYPE = "fat32"
+SDIMG_BOOTFS = "$(IMAGE_DIR)/$(IMAGE_NAME).bootfs.$(SDIMG_BOOTFS_TYPE)"
+
+SDIMG_ROOTFS_TYPE = "ext4"
+SDIMG_ROOTFS = "$(IMAGE_DIR)/$(IMAGE_NAME).rootfs.$(SDIMG_ROOTFS_TYPE)"
+
+# Align partitions
+_BOOT_SPACE_ALIGNED = $(shell expr $(BOOT_SPACE) + $(IMAGE_ROOTFS_ALIGNMENT) - 1)
+BOOT_SPACE_ALIGNED = $(shell expr $(_BOOT_SPACE_ALIGNED) - $(_BOOT_SPACE_ALIGNED) % $(IMAGE_ROOTFS_ALIGNMENT))
+SDIMG_SIZE = $(shell expr $(IMAGE_ROOTFS_ALIGNMENT) + $(BOOT_SPACE_ALIGNED) + $(ROOT_SPACE) + $(IMAGE_ROOTFS_ALIGNMENT))
+
+flash-image-orangepioneplus-sdcard: host-e2fsprogs
+	cp -rvf $(KERNEL_OBJ_DIR)/arch/$(KERNEL_ARCH)/boot/$(KERNEL_IMAGE_TYPE) $(KERNEL)
+	cp -rvf $(KERNEL_OUTPUT_DTB) $(DTBFILE)
+	mkimage -A $(KERNEL_ARCH) -O linux -C none -T kernel -a $(KERNEL_LOADADDR) -e $(KERNEL_LOADADDR) -n OrangePi -d $(KERNEL) $(UIMAGE)
+	mkimage -C none -A $(KERNEL_ARCH) -T script -d $(UBOOTDATA) $(UBOOTSCRIPT)
+	# Initialize sdcard image file
+	dd if=/dev/zero of=$(SDIMG) bs=1 count=0 seek=$(shell expr 1024 \* $(SDIMG_SIZE))
+	# Create partition table
+	parted -s $(SDIMG) mklabel msdos
+	# Create boot partition and mark it as bootable
+	parted -s $(SDIMG) unit KiB mkpart primary $(SDIMG_BOOTFS_TYPE) $(IMAGE_ROOTFS_ALIGNMENT) $(shell expr $(BOOT_SPACE_ALIGNED) \+ $(IMAGE_ROOTFS_ALIGNMENT))
+	parted -s $(SDIMG) set 1 boot on
+	# Create rootfs partition
+	parted -s $(SDIMG) unit KiB mkpart primary $(SDIMG_ROOTFS_TYPE) $(shell expr $(BOOT_SPACE_ALIGNED) \+ $(IMAGE_ROOTFS_ALIGNMENT)) $(shell expr $(BOOT_SPACE_ALIGNED) \+ $(IMAGE_ROOTFS_ALIGNMENT) \+ $(ROOT_SPACE))
+	parted $(SDIMG) print
+	# Create a vfat image with boot files
+	dd if=/dev/zero of=$(SDIMG_BOOTFS) bs=512 count=$(shell expr $(BOOT_SPACE) \* 2)
+	mkfs.vfat -S 512 $(SDIMG_BOOTFS)
+	mcopy -i $(SDIMG_BOOTFS) $(UBOOTSCRIPT) ::boot.scr
+	mcopy -i $(SDIMG_BOOTFS) $(UIMAGE) ::uImage
+	mcopy -i $(SDIMG_BOOTFS) $(DTBFILE) ::$(DTB)
+	# Create a ext4/ext3/ext2 image with rootfs files
+	dd if=/dev/zero of=$(SDIMG_ROOTFS) seek=$(shell expr $(ROOT_SPACE) \* 2) count=0 bs=512
+	$(HOST_DIR)/bin/mkfs.ext4 -F -m0 $(SDIMG_ROOTFS) -d $(RELEASE_DIR)
+	# Burn partitions
+	dd if=$(SDIMG_BOOTFS) of=$(SDIMG) conv=notrunc seek=1 bs=$(shell expr $(IMAGE_ROOTFS_ALIGNMENT) \* 1024) && sync && sync
+	dd if=$(SDIMG_ROOTFS) of=$(SDIMG) conv=notrunc seek=1 bs=$(shell expr 1024 \* $(BOOT_SPACE_ALIGNED) + $(IMAGE_ROOTFS_ALIGNMENT) \* 1024) && sync && sync
+	dd if=$(UBOOT) of=$(SDIMG) bs=1024 seek=8 conv=notrunc
+	rm -rf $(SDIMG_BOOTFS)
+	rm -rf $(SDIMG_ROOTFS)

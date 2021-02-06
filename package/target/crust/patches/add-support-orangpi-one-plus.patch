@@ -1,0 +1,8 @@
+diff -rupN crust/configs/orangepi_one_plus_defconfig crust-patched/configs/orangepi_one_plus_defconfig
+--- crust/configs/orangepi_one_plus_defconfig	1970-01-01 01:00:00.000000000 +0100
++++ crust-patched/configs/orangepi_one_plus_defconfig	2021-02-04 03:59:03.622978545 +0100
+@@ -0,0 +1,4 @@
++CONFIG_PLATFORM_H6=y
++CONFIG_CIR=y
++CONFIG_MFD_AXP20X=y
++

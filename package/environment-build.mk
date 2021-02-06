@@ -124,6 +124,7 @@ endif
 ifeq ($(TARGET_ARCH),aarch64)
 GNU_TARGET_NAME ?= aarch64-unknown-linux-gnu
 TARGET_ARCH      = aarch64
+#TARGET_ABI       = -march=armv8-a+crc -mtune=cortex-a53
 TARGET_ABI       =
 TARGET_ENDIAN    = big
 endif
@@ -140,8 +141,7 @@ TARGET_CPPFLAGS = $(TARGET_CFLAGS)
 TARGET_CXXFLAGS = $(TARGET_CFLAGS)
 TARGET_LDFLAGS  = -L$(TARGET_DIR)/lib -L$(TARGET_DIR)/usr/lib -Wl,-O1 -Wl,-rpath -Wl,/usr/lib -Wl,-rpath-link -Wl,${TARGET_DIR}/usr/lib $(TARGET_EXTRA_LDFLAGS)
 
-#TARGET_CROSS    = $(CROSS_DIR)/bin/$(GNU_TARGET_NAME)-
-TARGET_CROSS    = $(GNU_TARGET_NAME)-
+TARGET_CROSS    = $(CROSS_DIR)/bin/$(GNU_TARGET_NAME)-
 
 # Define TARGET_xx variables for all common binutils/gcc
 TARGET_AR       = $(TARGET_CROSS)ar
@@ -174,7 +174,7 @@ TERM_NORMAL      = \033[0m
 # search path(s) for all prerequisites
 VPATH = $(DEPS_DIR)
 
-PATH := $(HOST_DIR)/ccache-bin:$(HOST_DIR)/bin:$(CROSS_DIR)/bin:$(PATH)
+PATH := $(HOST_DIR)/bin:$(CROSS_DIR)/bin:$(PATH)
 
 # -----------------------------------------------------------------------------
 
@@ -236,6 +236,7 @@ MAKE_OPTS = \
 
 TARGET_CONFIGURE_ENV = \
 	$(MAKE_OPTS) \
+	\
 	CFLAGS="$(TARGET_CFLAGS)" \
 	CPPFLAGS="$(TARGET_CPPFLAGS)" \
 	CXXFLAGS="$(TARGET_CXXFLAGS)" \
@@ -244,8 +245,7 @@ TARGET_CONFIGURE_ENV = \
 TARGET_CONFIGURE_ENV += \
 	PKG_CONFIG_PATH="" \
 	PKG_CONFIG_LIBDIR=$(PKG_CONFIG_LIBDIR) \
-	PKG_CONFIG_SYSROOT_DIR=$(TARGET_DIR) \
-	$($(PKG)_CONF_ENV)
+	PKG_CONFIG_SYSROOT_DIR=$(TARGET_DIR)
 
 TARGET_CONFIGURE_OPTS = \
 	--build=$(GNU_HOST_NAME) \
@@ -270,11 +270,7 @@ TARGET_CONFIGURE_OPTS = \
 	$($(PKG)_CONF_OPTS)
 
 CONFIGURE = \
-	if [ "$($(PKG)_AUTORECONF)" == "YES" ]; then \
-	  autoreconf -fi; \
-	fi; \
 	test -f ./configure || ./autogen.sh && \
-	CONFIG_SITE=/dev/null \
 	$(TARGET_CONFIGURE_ENV) \
 	./configure \
 	$(TARGET_CONFIGURE_OPTS)

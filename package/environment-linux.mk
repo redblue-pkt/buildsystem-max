@@ -178,6 +178,25 @@ endif
 
 # -----------------------------------------------------------------------------
 
+#
+# Orange Pi
+#
+ifeq ($(BOXMODEL),$(filter $(BOXMODEL),orangepioneplus))
+
+ifeq ($(BOXMODEL),orangepioneplus)
+KERNEL_VER         = 5.10.4
+KERNEL_SOURCE_VER  = 5.10.4
+MTD_BLACK          = mmcblk0
+MTD_BOOTFS         = mmcblk0p0
+endif
+
+KERNEL_IMAGE_TYPE  = Image
+KERNEL_SOURCE      = linux-$(KERNEL_SOURCE_VER).tar.xz
+KERNEL_DTB         = dtbs
+KERNEL_SITE        = https://cdn.kernel.org/pub/linux/kernel/v5.x
+KERNEL_DIR         = linux-$(KERNEL_SOURCE_VER)
+endif
+
 KERNEL_OBJ         = linux-$(KERNEL_VER)-kernel-obj
 KERNEL_OBJ_DIR     = $(BUILD_DIR)/$(KERNEL_OBJ)
 KERNEL_MODULES     = linux-$(KERNEL_VER)-modules
@@ -186,7 +205,12 @@ TARGET_MODULES_DIR = $(TARGET_DIR)/lib/modules/$(KERNEL_VER)
 
 KERNEL_OUTPUT      = $(KERNEL_OBJ_DIR)/arch/$(KERNEL_ARCH)/boot/$(KERNEL_IMAGE_TYPE)
 KERNEL_INPUT_DTB   = $(KERNEL_OBJ_DIR)/arch/$(KERNEL_ARCH)/boot/dts/$(KERNEL_DTB)
+
+ifeq ($(BOXMODEL),$(filter $(BOXMODEL),orangepioneplus))
+KERNEL_OUTPUT_DTB  = $(KERNEL_OBJ_DIR)/arch/$(KERNEL_ARCH)/boot/dts/allwinner/sun50i-h6-orangepi-one-plus.dtb
+else
 KERNEL_OUTPUT_DTB  = $(KERNEL_OBJ_DIR)/arch/$(KERNEL_ARCH)/boot/zImage_dtb
+endif
 
 ifeq ($(VU_MULTIBOOT),1)
 KERNEL_CONFIG      = $(BOXMODEL)_defconfig_multi
@@ -223,10 +247,10 @@ KERNEL_MAKEVARS += \
 	KERNDIR=$(LINUX_DIR) \
 	KERNELDIR=$(LINUX_DIR) \
 	KERNEL_SRC=$(LINUX_DIR) \
-	KERNEL_SOURCE=$(LINUX_DIR) \
+	KERNEL_SOURCE=${LINUX_DIR} \
 	LINUX_SRC=$(LINUX_DIR) \
-	KVER=$(KERNEL_VER) \
-	KERNEL_VERSION=$(KERNEL_VER)
+	KVER=$(LINUX_DIR) \
+	KERNEL_VERSION=$(LINUX_DIR)
 
 # -----------------------------------------------------------------------------
 

@@ -1,0 +1,17 @@
+--- a/scripts/crosstool-NG.sh	2021-01-24 16:53:24.000000000 +0100
++++ b/scripts/crosstool-NG.sh	2021-01-24 17:15:20.111004994 +0100
+@@ -24,14 +24,6 @@ CT_LoadConfig
+ # Yes! We can do full logging from now on! Clean any old log file content.
+ CT_LogEnable clean=yes
+ 
+-# Check running as root
+-if [ -z "${CT_ALLOW_BUILD_AS_ROOT_SURE}" ]; then
+-    if [ $(id -u) -eq 0 ]; then
+-        CT_DoLog ERROR "You must NOT be root to run crosstool-NG"
+-        exit 1
+-    fi
+-fi
+-
+ CT_TestAndAbort "Invalid configuration. Run 'ct-ng menuconfig' and check which options select INVALID_CONFIGURATION." -n "${CT_INVALID_CONFIGURATION}"
+ 
+ # If we want an interactive debug-shell, we must ensure these FDs

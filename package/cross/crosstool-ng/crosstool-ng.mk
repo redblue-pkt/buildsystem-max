@@ -10,6 +10,8 @@ CROSSTOOL_NG_DEPS   = directories kernel.do_prepare
 CROSSTOOL_NG_CONFIG = crosstool-ng-$(TARGET_ARCH)-$(CROSSTOOL_GCC_VER)
 CROSSTOOL_NG_BACKUP = $(DL_DIR)/$(CROSSTOOL_NG_CONFIG)-kernel-$(KERNEL_VER)-backup.tar.gz
 
+CROSSTOOL_NG_PATCH  = crosstool-ng-allow-compile-as-root.patch
+
 CROSSTOOL_NG_CHECKOUT = dd20ee55
 # -----------------------------------------------------------------------------
 
@@ -27,6 +29,7 @@ crosstool-ng:
 	$(PKG_REMOVE)
 	$(call PKG_DOWNLOAD,$(PKG_SOURCE))
 	$(call PKG_UNPACK,$(BUILD_DIR))
+	$(PKG_APPLY_PATCHES)
 	unset CONFIG_SITE LIBRARY_PATH CPATH C_INCLUDE_PATH PKG_CONFIG_PATH CPLUS_INCLUDE_PATH INCLUDE; \
 	$(PKG_CHDIR); \
 		$(INSTALL_DATA) $(PKG_FILES_DIR)/$(CROSSTOOL_NG_CONFIG).config .config; \
@@ -35,7 +38,6 @@ crosstool-ng:
 		test $$NUM_CPUS -gt $$MEM_512M && NUM_CPUS=$$MEM_512M; \
 		test $$NUM_CPUS = 0 && NUM_CPUS=1; \
 		$(SED) "s@^CT_PARALLEL_JOBS=.*@CT_PARALLEL_JOBS=$$NUM_CPUS@" .config; \
-		\
 		export CT_NG_ARCHIVE=$(DL_DIR); \
 		export CT_NG_BASE_DIR=$(CROSS_DIR); \
 		export CT_NG_CUSTOM_KERNEL=$(LINUX_DIR); \

@@ -37,7 +37,7 @@ $(D)/directories:
 	mkdir -p $(HOST_DIR)
 	mkdir -p $(IMAGE_DIR)
 	mkdir -p $(SOURCE_DIR)
-	mkdir -p $(HOST_DIR)/{ccache-bin,bin,lib,share}
+	mkdir -p $(HOST_DIR)/{bin,lib,share}
 	mkdir -p $(TARGET_DIR)/{bin,boot,etc,lib,sbin,usr,var}
 	mkdir -p $(TARGET_DIR)/etc/{default,init.d,network,ssl,udev}
 	mkdir -p $(TARGET_DIR)/etc/default/volatiles
@@ -102,7 +102,11 @@ SYSTEM_TOOLS += autofs
 SYSTEM_TOOLS += ethtool
 SYSTEM_TOOLS += ofgwrite
 SYSTEM_TOOLS += wget
+SYSTEM_TOOLS += nano
 SYSTEM_TOOLS += busybox
+ifeq ($(BOXMODEL), $(filter $(BOXMODEL),orangepioneplus))
+SYSTEM_TOOLS += lirc
+endif
 
 $(D)/system-tools: $(SYSTEM_TOOLS)
 	@touch $@
@@ -112,9 +116,11 @@ $(D)/system-tools: $(SYSTEM_TOOLS)
 #
 MACHINE_DEPS  = kernel
 MACHINE_DEPS += kernel-modules-clean
+ifneq ($(BOXMODEL),$(filter $(BOXMODEL),orangepioneplus))
 MACHINE_DEPS += $(BOXMODEL)-driver
 ifneq ($(BOXMODEL),$(filter $(BOXMODEL),bre2ze4k h7 hd51 hd60 hd61 vuduo))
 MACHINE_DEPS += $(BOXMODEL)-libgles
+endif
 endif
 ifeq ($(BOXMODEL),$(filter $(BOXMODEL),vuduo4k vuduo4kse vusolo4k vuultimo4k vuuno4k vuuno4kse vuzero4k))
 MACHINE_DEPS += $(BOXMODEL)-platform-util
@@ -126,6 +132,9 @@ MACHINE_DEPS += $(BOXMODEL)-libs
 endif
 ifeq ($(BOXMODEL), $(filter $(BOXMODEL),osmio4k osmio4kplus))
 MACHINE_DEPS += wlan-qcom
+endif
+ifeq ($(BOXMODEL), $(filter $(BOXMODEL),orangepioneplus))
+MACHINE_DEPS += u-boot
 endif
 
 $(D)/machine-deps: $(MACHINE_DEPS)

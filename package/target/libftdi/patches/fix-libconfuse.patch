@@ -1,0 +1,113 @@
+diff -rupN libftdi1-1.5/cmake/FindConfuse.cmake libftdi1-1.5-patched/cmake/FindConfuse.cmake
+--- libftdi1-1.5/cmake/FindConfuse.cmake	2020-07-07 21:32:55.000000000 +0200
++++ libftdi1-1.5-patched/cmake/FindConfuse.cmake	2021-02-04 21:00:35.715676113 +0100
+@@ -1,74 +1,37 @@
+-# libConfuse is a configuration file parser library
+-# available at http://www.nongnu.org/confuse/
++# - Try to find the freetype library
++# Once done this defines
+ #
+-# The module defines the following variables:
+-#  CONFUSE_FOUND - the system has Confuse
+-#  CONFUSE_INCLUDE_DIR - where to find confuse.h
+-#  CONFUSE_INCLUDE_DIRS - confuse includes
+-#  CONFUSE_LIBRARY - where to find the Confuse library
+-#  CONFUSE_LIBRARIES - additional libraries
+-#  CONFUSE_ROOT_DIR - root dir (ex. /usr/local)
+-
+-#=============================================================================
+-# Copyright 2010-2013, Julien Schueller
+-# All rights reserved.
+-# 
+-# Redistribution and use in source and binary forms, with or without
+-# modification, are permitted provided that the following conditions are met: 
+-# 
+-# 1. Redistributions of source code must retain the above copyright notice, this
+-#    list of conditions and the following disclaimer. 
+-# 2. Redistributions in binary form must reproduce the above copyright notice,
+-#    this list of conditions and the following disclaimer in the documentation
+-#    and/or other materials provided with the distribution. 
++#  CONFUSE_FOUND - system has libconfuse
++#  CONFUSE_INCLUDE_DIR - the libusb include directory
++#  CONFUSE_LIBRARIES - Link these to use libconfuse
++
++# Copyright (c) 2006, 2008  Laurent Montel, <montel@kde.org>
+ #
+-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+-# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+-# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-
+-# The views and conclusions contained in the software and documentation are those
+-# of the authors and should not be interpreted as representing official policies, 
+-# either expressed or implied, of the FreeBSD Project.
+-#=============================================================================
+-
+-
+-find_path ( CONFUSE_INCLUDE_DIR
+-  NAMES confuse.h
+-)
+-
+-set ( CONFUSE_INCLUDE_DIRS ${CONFUSE_INCLUDE_DIR} )
+-
+-find_library ( CONFUSE_LIBRARY
+-  NAMES confuse
+-)
+-
+-set ( CONFUSE_LIBRARIES ${CONFUSE_LIBRARY} )
+-
+-
+-# try to guess root dir from include dir
+-if ( CONFUSE_INCLUDE_DIR )
+-  string ( REGEX REPLACE "(.*)/include.*" "\\1" CONFUSE_ROOT_DIR ${CONFUSE_INCLUDE_DIR} )
+-# try to guess root dir from library dir
+-elseif ( CONFUSE_LIBRARY )
+-  string ( REGEX REPLACE "(.*)/lib[/|32|64].*" "\\1" CONFUSE_ROOT_DIR ${CONFUSE_LIBRARY} )
+-endif ()
+-
+-
+-# handle the QUIETLY and REQUIRED arguments
+-include ( FindPackageHandleStandardArgs )
+-find_package_handle_standard_args( Confuse DEFAULT_MSG CONFUSE_LIBRARY CONFUSE_INCLUDE_DIR  )
+-
+-mark_as_advanced (
+-  CONFUSE_LIBRARY 
+-  CONFUSE_LIBRARIES
+-  CONFUSE_INCLUDE_DIR
+-  CONFUSE_INCLUDE_DIRS
+-  CONFUSE_ROOT_DIR
+-)
++# Redistribution and use is allowed according to the terms of the BSD license.
++# For details see the accompanying COPYING-CMAKE-SCRIPTS file.
++
++
++if (CONFUSE_INCLUDE_DIR AND CONFUSE_LIBRARIES)
++
++  # in cache already
++  set(CONFUSE_FOUND TRUE)
++
++else (CONFUSE_INCLUDE_DIR AND CONFUSE_LIBRARIES)
++  # use pkg-config to get the directories and then use these values
++  # in the FIND_PATH() and FIND_LIBRARY() calls
++  find_package(PkgConfig)
++  pkg_check_modules(PC_CONFUSE libconfuse)
++
++  FIND_PATH(CONFUSE_INCLUDE_DIR confuse.h
++    PATH_SUFFIXES libconfuse
++    PATHS ${PC_CONFUSE_INCLUDEDIR} ${PC_CONFUSE_INCLUDE_DIRS})
++
++  FIND_LIBRARY(CONFUSE_LIBRARIES NAMES confuse
++    PATHS ${PC_CONFUSE_LIBDIR} ${PC_CONFUSE_LIBRARY_DIRS})
++
++  include(FindPackageHandleStandardArgs)
++  FIND_PACKAGE_HANDLE_STANDARD_ARGS(CONFUSE DEFAULT_MSG CONFUSE_LIBRARIES CONFUSE_INCLUDE_DIR)
++
++  MARK_AS_ADVANCED(CONFUSE_INCLUDE_DIR CONFUSE_LIBRARIES)
++
++endif (CONFUSE_INCLUDE_DIR AND CONFUSE_LIBRARIES)

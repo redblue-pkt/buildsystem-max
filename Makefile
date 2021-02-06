@@ -4,12 +4,6 @@
 # -----------------------------------------------------------------------------
 
 MAINTAINER := $(shell whoami)
-UID := $(shell id -u)
-ifeq ($(UID),0)
-warn:
-	@echo "You are running as root. Do not do this, it is dangerous."
-	@echo "Aborting the build. Log in as a regular user and retry."
-else
 
 # Delete default rules. We don't use them. This saves a bit of time.
 .SUFFIXES:
@@ -202,5 +196,3 @@ PHONY += printenv help all everything
 PHONY += update update-self
 PHONY += .print-phony
 .PHONY: $(PHONY)
-
-endif

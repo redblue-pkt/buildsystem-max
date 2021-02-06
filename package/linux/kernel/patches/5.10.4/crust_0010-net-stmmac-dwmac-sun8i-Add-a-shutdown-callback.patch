@@ -1,0 +1,27 @@
+diff -rupN linux-5.10.4/drivers/net/ethernet/stmicro/stmmac/dwmac-sun8i.c linux-5.10.4-patched/drivers/net/ethernet/stmicro/stmmac/dwmac-sun8i.c
+--- linux-5.10.4/drivers/net/ethernet/stmicro/stmmac/dwmac-sun8i.c	2021-02-05 03:30:44.439838564 +0100
++++ linux-5.10.4-patched/drivers/net/ethernet/stmicro/stmmac/dwmac-sun8i.c	2021-02-05 03:27:25.028972654 +0100
+@@ -1247,6 +1247,15 @@ dwmac_exit:
+ return ret;
+ }
+ 
++static void sun8i_dwmac_shutdown(struct platform_device *pdev)
++{
++	struct net_device *ndev = platform_get_drvdata(pdev);
++	struct stmmac_priv *priv = netdev_priv(ndev);
++	struct sunxi_priv_data *gmac = priv->plat->bsp_priv;
++
++	sun8i_dwmac_exit(pdev, gmac);
++}
++
+ static const struct of_device_id sun8i_dwmac_match[] = {
+ 	{ .compatible = "allwinner,sun8i-h3-emac",
+ 		.data = &emac_variant_h3 },
+@@ -1267,6 +1276,7 @@ MODULE_DEVICE_TABLE(of, sun8i_dwmac_matc
+ static struct platform_driver sun8i_dwmac_driver = {
+ 	.probe  = sun8i_dwmac_probe,
+ 	.remove = stmmac_pltfr_remove,
++	.shutdown = sun8i_dwmac_shutdown,
+ 	.driver = {
+ 		.name           = "dwmac-sun8i",
+ 		.pm		= &stmmac_pltfr_pm_ops,

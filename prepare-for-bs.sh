@@ -119,6 +119,8 @@ PACKAGES="\
 	${UBUNTU:+curl}                                                                                               \
 	${UBUNTU:+libcap-dev}                                                                                         \
 	${UBUNTU:+libseccomp-dev}                                                                                     \
+	${UBUNTU:+device-tree-compiler}	                                                                              \
+	${UBUNTU:+xsltproc}                                                                                           \
 ";
 
 if [ "$UBUNTU" == 1 ]; then
@@ -161,4 +163,12 @@ if [ ! "$?" -eq "0" ]; then
 		rm -f /bin/sh
 		ln -s /bin/bash /bin/sh
 	fi
+fi
+
+OPENRISC_TOOLCHAIN="openrisc--musl--stable-2020.08-1.tar.bz2"
+OPENRISC_URL="https://toolchains.bootlin.com/downloads/releases/toolchains/openrisc/tarballs/$OPENRISC_TOOLCHAIN"
+TOOLCHAIN_DESTINATION="/opt/toolchains"
+if [ ! -e $TOOLCHAIN_DESTINATION/$OPENRISC_TOOLCHAIN ]; then
+	wget --no-check-certificate -t6 -T20 -c $OPENRISC_URL -P $TOOLCHAIN_DESTINATION
+	tar -xvjf $TOOLCHAIN_DESTINATION/$OPENRISC_TOOLCHAIN -C $TOOLCHAIN_DESTINATION
 fi
