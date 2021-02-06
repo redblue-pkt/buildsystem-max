@@ -75,7 +75,7 @@ case "$REPLY" in
 	50) TARGET_ARCH="aarch64";BOXTYPE="generic";BOXMODEL="orangepioneplus";;
 	 *) TARGET_ARCH="arm";BOXTYPE="armbox";BOXMODEL="hd51";;
 esac
-echo "TARGET_ARCH=$TARGET_ARCH" >> .config
+echo "TARGET_ARCH=$TARGET_ARCH" > .config
 echo "BOXTYPE=$BOXTYPE" >> .config
 echo "BOXMODEL=$BOXMODEL" >> .config
 
